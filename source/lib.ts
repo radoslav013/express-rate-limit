@@ -305,48 +305,47 @@ const handleAsyncErrors =
 const rateLimit = (
 	passedOptions?: Partial<Options>,
 ): RateLimitRequestHandler => {
-	// Parse the options and add the default values for unspecified options
+	// Parse the options and add the default values for unspecified options.
 	const config = parseOptions(passedOptions ?? {})
 	const options = getOptionsFromConfig(config)
 
-	// Call the `init` method on the store, if it exists
+	// Call the `init` method on the store, if it exists.
 	if (typeof config.store.init === 'function') config.store.init(options)
 
-	// Then return the actual middleware
+	// Then return the actual middleware.
 	const middleware = handleAsyncErrors(
 		async (request: Request, response: Response, next: NextFunction) => {
-			// First check if we should skip the request
+			// First check if we should skip the request.
 			const skip = await config.skip(request, response)
 			if (skip) {
 				next()
 				return
 			}
 
-			// Create an augmented request
+			// Create an augmented request.
 			const augmentedRequest = request as AugmentedRequest
 
-			// Get a unique key for the client
+			// Get a unique key for the client, then increment the client's hit counter
+			// by one, and make sure it's only by one.
 			const key = await config.keyGenerator(request, response)
-			// Increment the client's hit counter by one, and make sure it's only by one
 			const { totalHits, resetTime } = await config.store.increment(key)
 			config.validations.singleCount(request, config.store, key)
 
-			// Get the quota (max number of hits) for each client
+			// Get the quota (max number of hits) for each client.
 			const retrieveQuota =
 				typeof config.max === 'function'
 					? config.max(request, response)
 					: config.max
 			const maxHits = await retrieveQuota
-			config.validations.max(maxHits)
+			config.validations.max(maxHits) // Warn about the change in `max: 0` behaviour.
 
+			// Set the rate limit information on the augmented request object
 			const info: RateLimitInfo = {
 				limit: maxHits,
 				current: totalHits,
 				remaining: Math.max(maxHits - totalHits, 0),
 				resetTime,
 			}
-
-			// Set the rate limit information on the augmented request object
 			augmentedRequest[config.requestPropertyName] = info
 
 			// Set the `X-RateLimit` headers on the response object if enabled.
@@ -366,7 +365,7 @@ const rateLimit = (
 			}
 
 			// If we are to skip failed/successfull requests, decrement the
-			// counter accordingly once we know the status code of the request
+			// counter accordingly once we know the status code of the request.
 			if (config.skipFailedRequests || config.skipSuccessfulRequests) {
 				let decremented = false
 				const decrementKey = async () => {
@@ -398,7 +397,7 @@ const rateLimit = (
 			}
 
 			// Call the `onLimitReached` callback on the first request where client
-			// exceeds their rate limit
+			// exceeds their rate limit.
 			// TODO: `onLimitReached` is deprecated, this should be removed in v7.x
 			if (maxHits && totalHits === maxHits + 1) {
 				config.onLimitReached(request, response, options)

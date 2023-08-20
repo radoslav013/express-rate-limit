@@ -198,10 +198,10 @@ export class Validations {
 	}
 
 	/**
-	 * Warns the user that the `onLimitReached` option is deprecated and will be removed in the next
-	 * major release.
+	 * Warns the user that the `onLimitReached` option is deprecated and will be
+	 * removed in the next major release.
 	 *
-	 * @param onLimitReached {function|undefined} - The maximum number of hits per client.
+	 * @param onLimitReached {Function | undefined} - The maximum number of hits per client.
 	 *
 	 * @returns {void}
 	 */
