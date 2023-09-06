@@ -8,7 +8,7 @@ import type {
 	RateLimitRequestHandler,
 	LegacyStore,
 	Store,
-	IncrementResponse,
+	ClientRateLimitInfo,
 	ValueDeterminingMiddleware,
 	RateLimitExceededEventHandler,
 	DraftHeadersVersion,
@@ -53,7 +53,14 @@ const promisifyStore = (passedStore: LegacyStore | Store): Store => {
 
 	// A promisified version of the store
 	class PromisifiedStore implements Store {
-		async increment(key: string): Promise<IncrementResponse> {
+		/* istanbul ignore next */
+		async get(key: string): Promise<ClientRateLimitInfo | undefined> {
+			// TODO: Add a validation check to tell the user that this function should
+			// never be called.
+			return undefined
+		}
+
+		async increment(key: string): Promise<ClientRateLimitInfo> {
 			return new Promise((resolve, reject) => {
 				legacyStore.incr(
 					key,
@@ -414,10 +421,13 @@ const rateLimit = (
 		},
 	)
 
-	// Export the store's function to reset the hit counter for a particular
-	// client based on their identifier
+	// Export the store's function to reset and fetch the rate limit info for a
+	// client based on their identifier.
 	;(middleware as RateLimitRequestHandler).resetKey =
 		config.store.resetKey.bind(config.store)
+	;(middleware as RateLimitRequestHandler).getKey = config.store.get?.bind(
+		config.store,
+	)
 
 	return middleware as RateLimitRequestHandler
 }
