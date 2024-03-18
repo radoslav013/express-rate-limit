@@ -887,14 +887,14 @@ describe('middleware test', () => {
 			.query({ key: 1 })
 			.expect(420, 'Enhance your calm')
 		expect(savedRequestObject.rateLimitKey.remaining).toEqual(0)
+		expect(savedRequestObject.rateLimitGlobal.remaining).toEqual(0)
 
 		savedRequestObject = undefined
-		await request(app).get('/').query({ key: 3 }).expect(200)
 		await request(app)
 			.get('/')
 			.query({ key: 3 })
 			.expect(429, 'Too many requests')
-		expect(savedRequestObject.rateLimitKey.remaining).toEqual(0)
+		expect(savedRequestObject.rateLimitKey.remaining).toEqual(1)
 		expect(savedRequestObject.rateLimitGlobal.remaining).toEqual(0)
 	})
 })

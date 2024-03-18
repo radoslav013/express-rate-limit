@@ -334,7 +334,7 @@ const rateLimit = (
 				// and call the `handler` function.
 				let info: RateLimitInfo | undefined = undefined, limit: number | undefined = undefined;
 				if (await config.store.get!(key)) {
-					let res: ClientRateLimitInfo | undefined = await config.store.get!(key);
+					const res: ClientRateLimitInfo | undefined = await config.store.get!(key);
 					let totalHits = res ? res.totalHits+1 : 1;
 					let resetTime = res?.resetTime || new Date(Date.now() + config.windowMs);
 					limit =
@@ -351,9 +351,8 @@ const rateLimit = (
 					}
 
 					if (totalHits > limit) {
-						if (config.legacyHeaders || config.standardHeaders) {
+						if (config.legacyHeaders || config.standardHeaders)
 							setRetryAfterHeader(response, info, config.windowMs)
-						}
 
 						config.handler(request, response, next, options)
 						return
